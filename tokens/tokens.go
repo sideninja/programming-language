@@ -2,14 +2,6 @@ package tokens
 
 type TokenType string
 
-/*
-let x = 1;
-fun foo() {}
-if x == 2 {}
-return
-
-*/
-
 const (
 	IDENTIFIER = "IDENT"
 	INT        = "INT"
@@ -31,13 +23,18 @@ const (
 	EOF        = ""
 	INVALID    = "INVALID"
 
-	// Keywords
+	// keywords
 	LET    = "LET"
 	FUN    = "FUN"
 	TRUE   = "TRUE"
 	FALSE  = "FALSE"
 	RETURN = "RETURN"
 )
+
+var EOFToken = Token{
+	Literal: EOF,
+	Type:    EOF,
+}
 
 var keywords = map[string]TokenType{
 	"fun":    FUN,
