@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"language/ast"
 	"language/lexer"
+	"language/tokens"
 	"testing"
 )
 
@@ -76,4 +77,18 @@ func Test_ReturnStatement(t *testing.T) {
 		p, _ := parseStatementsWithLen(t, input, 2)
 		require.Len(t, p.errors, 0)
 	})
+}
+
+func Test_ProgramStringer(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.LetStatement{
+				Token:      tokens.Token{Type: tokens.LET, Literal: "let"},
+				Identifier: ast.Identifier{Token: tokens.Token{Literal: "x", Type: tokens.IDENTIFIER}, Value: "x"},
+				Value:      &ast.Identifier{Token: tokens.Token{Literal: "100", Type: tokens.INT}, Value: "100"},
+			},
+		},
+	}
+
+	assert.Equal(t, "let x = 100;", program.String())
 }

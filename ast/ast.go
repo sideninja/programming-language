@@ -63,7 +63,7 @@ func (a *LetStatement) String() string {
 	return fmt.Sprintf(
 		"%s %s = %s;",
 		a.Token.Literal,
-		a.Identifier.Value,
+		a.Identifier.String(),
 		val,
 	)
 }
