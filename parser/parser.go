@@ -12,11 +12,16 @@ type Parser struct {
 
 	token     tokens.Token
 	peekToken tokens.Token
+
+	errors []error
 }
 
 func New(l *lexer.Lexer) *Parser {
-	parser := &Parser{lexer: l}
+	parser := &Parser{
+		lexer: l,
+	}
 
+	// we fill current token and peek token, so they are not empty
 	parser.nextToken()
 	parser.nextToken()
 
@@ -31,29 +36,30 @@ func (p *Parser) nextToken() {
 func (p *Parser) Parse() (*ast.Program, error) {
 	program := &ast.Program{}
 
-	for p.token != tokens.EOFToken {
-		st, err := p.parseStatement()
-		if err != nil {
-			return nil, err
+	for !p.isPeekType(tokens.EOF) {
+		st := p.parseStatement()
+		if st != nil {
+			program.Statements = append(program.Statements, st)
 		}
 
-		program.Statements = append(program.Statements, st)
 		p.nextToken()
 	}
 
 	return program, nil
 }
 
-func (p *Parser) parseStatement() (ast.Statement, error) {
+func (p *Parser) parseStatement() ast.Statement {
+
 	switch p.token.Type {
 	case tokens.LET:
 		st, err := p.parseLetStatement()
 		if err != nil {
-			return nil, fmt.Errorf("parsing let statement failed: %w", err)
+			p.addParseError(fmt.Errorf("parsing let statement failed: %w", err))
 		}
-		return st, nil
+		return st
 	default:
-		return nil, fmt.Errorf("invalid statement")
+		p.addParseError(fmt.Errorf("invalid parse statement: %v", p.token))
+		return nil
 	}
 }
 
@@ -67,10 +73,7 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 		Token: p.token, // let
 	}
 
-	if err := p.mustPeekType(tokens.IDENTIFIER); err != nil {
-		return nil, err
-	}
-
+	p.expectPeekType(tokens.IDENTIFIER)
 	p.nextToken() // identifier
 
 	st.Identifier = ast.Identifier{
@@ -78,10 +81,7 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 		Value: p.token.Literal,
 	}
 
-	if err := p.mustPeekType(tokens.ASSIGN); err != nil {
-		return nil, err
-	}
-
+	p.expectPeekType(tokens.ASSIGN)
 	p.nextToken() // assign =
 
 	st.Right = p.parseExpression()
@@ -93,9 +93,16 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 	return st, nil
 }
 
-func (p *Parser) mustPeekType(t tokens.TokenType) error {
-	if p.peekToken.Type != t {
-		return fmt.Errorf("expected %s, got %s", t, p.peekToken.Type)
+func (p *Parser) isPeekType(t tokens.TokenType) bool {
+	return p.peekToken.Type == t
+}
+
+func (p *Parser) expectPeekType(t tokens.TokenType) {
+	if !p.isPeekType(t) {
+		p.addParseError(fmt.Errorf("expected %s, got %s", t, p.peekToken.Type))
 	}
-	return nil
+}
+
+func (p *Parser) addParseError(err error) {
+	p.errors = append(p.errors, err)
 }
