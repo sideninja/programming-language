@@ -32,56 +32,70 @@ func (p *Parser) Parse() (*ast.Program, error) {
 	program := &ast.Program{}
 
 	for p.token != tokens.EOFToken {
-		var st ast.Statement
-		var err error
-
-		switch p.token.Type {
-		case tokens.LET:
-			st, err = p.parseLetStatement()
-			if err != nil {
-				return nil, fmt.Errorf("parsing let statement failed: %w", err)
-			}
+		st, err := p.parseStatement()
+		if err != nil {
+			return nil, err
 		}
 
-		if st != nil {
-			program.Statements = append(program.Statements, st)
-		}
-
+		program.Statements = append(program.Statements, st)
 		p.nextToken()
 	}
 
 	return program, nil
 }
 
-func (p *Parser) parseExpression() {
+func (p *Parser) parseStatement() (ast.Statement, error) {
+	switch p.token.Type {
+	case tokens.LET:
+		st, err := p.parseLetStatement()
+		if err != nil {
+			return nil, fmt.Errorf("parsing let statement failed: %w", err)
+		}
+		return st, nil
+	default:
+		return nil, fmt.Errorf("invalid statement")
+	}
+}
+
+func (p *Parser) parseExpression() ast.Expression {
 	// todo
+	return nil
 }
 
 func (p *Parser) parseLetStatement() (ast.Statement, error) {
-	letToken := p.token
+	st := &ast.LetStatement{
+		Token: p.token, // let
+	}
 
-	if p.peekToken.Type != tokens.IDENTIFIER {
-		return nil, fmt.Errorf("expected identifier, got %s", p.peekToken.Type)
+	if err := p.mustPeekType(tokens.IDENTIFIER); err != nil {
+		return nil, err
 	}
 
 	p.nextToken() // identifier
 
-	identifier := ast.Identifier{
+	st.Identifier = ast.Identifier{
 		Token: p.token,
 		Value: p.token.Literal,
 	}
 
-	if p.peekToken.Type != tokens.ASSIGN {
-		return nil, fmt.Errorf("expected assignment, got %s", p.peekToken.Type)
+	if err := p.mustPeekType(tokens.ASSIGN); err != nil {
+		return nil, err
 	}
 
 	p.nextToken() // assign =
 
-	p.parseExpression()
+	st.Right = p.parseExpression()
 
-	return &ast.LetStatement{
-		Token:      letToken,
-		Identifier: identifier,
-		Right:      nil, // todo fil
-	}, nil
+	for p.token.Type != tokens.SEMICOLON {
+		p.nextToken()
+	}
+
+	return st, nil
+}
+
+func (p *Parser) mustPeekType(t tokens.TokenType) error {
+	if p.peekToken.Type != t {
+		return fmt.Errorf("expected %s, got %s", t, p.peekToken.Type)
+	}
+	return nil
 }

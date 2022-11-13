@@ -65,6 +65,8 @@ func (l *Lexer) NextToken() tokens.Token {
 		} else {
 			token = tokens.New(l.symbol.String(), tokens.ASSIGN)
 		}
+	case ';':
+		token = tokens.New(l.symbol.String(), tokens.SEMICOLON)
 	case EOF:
 		token = tokens.New(l.symbol.String(), tokens.EOF)
 	default:
