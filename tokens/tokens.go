@@ -3,7 +3,7 @@ package tokens
 type TokenType string
 
 const (
-	IDENTIFIER = "IDENT"
+	IDENTIFIER = "IDENTIFIER"
 	INT        = "INT"
 	SEMICOLON  = ";"
 	ASSIGN     = "="

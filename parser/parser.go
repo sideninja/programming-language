@@ -58,7 +58,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		}
 		return st
 	default:
-		p.addParseError(fmt.Errorf("invalid parse statement: %v", p.token))
 		return nil
 	}
 }
@@ -73,7 +72,9 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 		Token: p.token, // let
 	}
 
-	p.expectPeekType(tokens.IDENTIFIER)
+	if err := p.expectPeekType(tokens.IDENTIFIER); err != nil {
+		return nil, err
+	}
 	p.nextToken() // identifier
 
 	st.Identifier = ast.Identifier{
@@ -81,7 +82,10 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 		Value: p.token.Literal,
 	}
 
-	p.expectPeekType(tokens.ASSIGN)
+	if err := p.expectPeekType(tokens.ASSIGN); err != nil {
+		return nil, err
+	}
+
 	p.nextToken() // assign =
 
 	st.Right = p.parseExpression()
@@ -97,10 +101,12 @@ func (p *Parser) isPeekType(t tokens.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
-func (p *Parser) expectPeekType(t tokens.TokenType) {
+func (p *Parser) expectPeekType(t tokens.TokenType) error {
 	if !p.isPeekType(t) {
-		p.addParseError(fmt.Errorf("expected %s, got %s", t, p.peekToken.Type))
+		return fmt.Errorf("expected %s, got %s", t, p.peekToken.Type)
 	}
+
+	return nil
 }
 
 func (p *Parser) addParseError(err error) {
