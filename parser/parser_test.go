@@ -27,7 +27,9 @@ func Test_LetStatement(t *testing.T) {
 			let boo = 1000000;
 			let x = 2;
 		`
-		_, statements := parseStatementsWithLen(t, input, 3)
+		p, statements := parseStatementsWithLen(t, input, 3)
+		require.Len(t, p.errors, 0)
+
 		identifiers := []string{"foo", "boo", "x"}
 
 		for i, st := range statements {
@@ -62,4 +64,16 @@ func Test_LetStatement(t *testing.T) {
 		}
 	})
 
+}
+
+func Test_ReturnStatement(t *testing.T) {
+	t.Run("successfully parse return statements", func(t *testing.T) {
+		input := `
+			return 1;
+			return x;
+		`
+
+		p, _ := parseStatementsWithLen(t, input, 2)
+		require.Len(t, p.errors, 0)
+	})
 }
