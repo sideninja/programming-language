@@ -97,7 +97,7 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 
 	p.nextToken() // assign =
 
-	st.Right = p.parseExpression()
+	st.Value = p.parseExpression()
 
 	for p.token.Type != tokens.SEMICOLON {
 		p.nextToken()
