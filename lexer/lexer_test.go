@@ -10,7 +10,7 @@ import (
 
 func readAllTokens(lexer *Lexer) []tokens.Token {
 	all := make([]tokens.Token, 0)
-	for token := lexer.nextToken(); token.Type != tokens.EOF; token = lexer.nextToken() {
+	for token := lexer.NextToken(); token.Type != tokens.EOF; token = lexer.NextToken() {
 		all = append(all, token)
 	}
 	return all

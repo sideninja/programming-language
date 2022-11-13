@@ -28,7 +28,7 @@ func New(input string) *Lexer {
 	return lex
 }
 
-func (l *Lexer) nextToken() tokens.Token {
+func (l *Lexer) NextToken() tokens.Token {
 	var token tokens.Token
 	l.skipWhitespace()
 
