@@ -103,6 +103,21 @@ func (i *Identifier) String() string {
 	return i.Value
 }
 
+type IntegerLiteral struct {
+	Token tokens.Token
+	Value int64
+}
+
+func (i *IntegerLiteral) expressionNode() {}
+
+func (i *IntegerLiteral) TokenLiteral() string {
+	return i.Token.Literal
+}
+
+func (i *IntegerLiteral) String() string {
+	return i.TokenLiteral()
+}
+
 type ExpressionStatement struct {
 	Token      tokens.Token
 	Expression Expression
@@ -119,4 +134,20 @@ func (e *ExpressionStatement) String() string {
 		return e.Expression.String()
 	}
 	return ""
+}
+
+type PrefixExpression struct {
+	Token    tokens.Token
+	Operator string
+	Right    Expression
+}
+
+func (p *PrefixExpression) expressionNode() {}
+
+func (p *PrefixExpression) TokenLiteral() string {
+	return p.Token.Literal
+}
+
+func (p *PrefixExpression) String() string {
+	return fmt.Sprintf("(%s%s)", p.Operator, p.Right.String())
 }

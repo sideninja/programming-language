@@ -107,3 +107,46 @@ func Test_Identifier(t *testing.T) {
 	assert.Equal(t, "foo", ident.Value)
 	assert.Equal(t, tokens.IDENTIFIER, string(ident.Token.Type))
 }
+
+func Test_Integer(t *testing.T) {
+	input := `1337;`
+	p, statements := parseStatementsWithLen(t, input, 1)
+	require.Len(t, p.errors, 0)
+
+	stm, ok := statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	exp, ok := stm.Expression.(*ast.IntegerLiteral)
+	require.True(t, ok)
+
+	assert.Equal(t, 1337, exp.Value)
+	assert.Equal(t, "1337", exp.TokenLiteral())
+}
+
+func Test_PrefixExpressions(t *testing.T) {
+	input := "!foo; -5;"
+
+	testOut := []struct {
+		operator string
+		literal  string
+		out      string
+	}{
+		{operator: "!", literal: "foo", out: "(!foo)"},
+		{operator: "-", literal: "5", out: "(-5)"},
+	}
+
+	p, statements := parseStatementsWithLen(t, input, 2)
+	require.Len(t, p.errors, 0)
+
+	for i, stm := range statements {
+		st, ok := stm.(*ast.ExpressionStatement)
+		require.True(t, ok)
+
+		prefix, ok := st.Expression.(*ast.PrefixExpression)
+		require.True(t, ok)
+
+		assert.Equal(t, testOut[i].operator, prefix.Operator)
+		assert.Equal(t, testOut[i].literal, prefix.Right.TokenLiteral())
+		assert.Equal(t, testOut[i].out, prefix.String())
+	}
+}

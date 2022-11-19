@@ -5,6 +5,7 @@ import (
 	"language/ast"
 	"language/lexer"
 	"language/tokens"
+	"strconv"
 )
 
 const (
@@ -44,6 +45,9 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	parser.registerPrefix(tokens.IDENTIFIER, parser.parseIdentifier)
+	parser.registerPrefix(tokens.INT, parser.parseIntegerLiteral)
+	parser.registerPrefix(tokens.NEGATIVE, parser.parsePrefixExpression)
+	parser.registerPrefix(tokens.MINUS, parser.parsePrefixExpression)
 
 	// we fill current token and peek token, so they are not empty
 	parser.nextToken()
@@ -69,25 +73,14 @@ func (p *Parser) Parse() (*ast.Program, error) {
 
 func (p *Parser) parseStatement() ast.Statement {
 	var st ast.Statement
-	var err error
 
 	switch p.token.Type {
 	case tokens.LET:
-		st, err = p.parseLetStatement()
-		if err != nil {
-			p.addParseError(fmt.Errorf("parsing let statement failed: %w", err))
-		}
-		return st
+		return p.parseLetStatement()
 	case tokens.RETURN:
-		st, err = p.parseReturnStatement()
-		if err != nil {
-			p.addParseError(fmt.Errorf("parsing return statement failed: %w", err))
-		}
+		st = p.parseReturnStatement()
 	default:
-		st, err = p.parseExpressionStatement()
-		if err != nil {
-			p.addParseError(fmt.Errorf("parsing expression failed: %w", err))
-		}
+		st = p.parseExpressionStatement()
 	}
 
 	return st
@@ -102,12 +95,14 @@ func (p *Parser) isPeekType(t tokens.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
-func (p *Parser) expectPeekType(t tokens.TokenType) error {
+func (p *Parser) expectPeekType(t tokens.TokenType) bool {
 	if !p.isPeekType(t) {
-		return fmt.Errorf("expected %s, got %s", t, p.peekToken.Type)
+		p.addParseError(fmt.Errorf("expected %s, got %s", t, p.peekToken.Type))
+		return false
 	}
 
-	return nil
+	p.nextToken()
+	return true
 }
 
 func (p *Parser) registerPrefix(token tokens.TokenType, parser prefixParse) {
@@ -129,23 +124,49 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	}
 }
 
-func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, error) {
-	st := &ast.ExpressionStatement{
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	integer := &ast.IntegerLiteral{
 		Token: p.token,
 	}
 
-	st.Expression = p.parseExpression(LOWEST)
+	val, err := strconv.ParseInt(p.token.Literal, 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	integer.Value = val
+	return integer
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	prefix := &ast.PrefixExpression{
+		Token:    p.token,
+		Operator: p.token.Literal,
+	}
+
+	p.nextToken()
+	prefix.Right = p.parseExpression(PREFIX)
+
+	return prefix
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	st := &ast.ExpressionStatement{
+		Token:      p.token,
+		Expression: p.parseExpression(LOWEST),
+	}
 
 	if p.isPeekType(tokens.SEMICOLON) {
 		p.nextToken()
 	}
 
-	return st, nil
+	return st
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	parser, registered := p.prefixParsers[p.token.Type]
 	if !registered {
+		p.addParseError(fmt.Errorf("no prefix parser found for token %s", p.token))
 		return nil
 	}
 	leftExpr := parser()
@@ -153,23 +174,22 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExpr
 }
 
-func (p *Parser) parseLetStatement() (ast.Statement, error) {
+func (p *Parser) parseLetStatement() ast.Statement {
 	st := &ast.LetStatement{
 		Token: p.token, // let
 	}
 
-	if err := p.expectPeekType(tokens.IDENTIFIER); err != nil {
-		return nil, err
+	if !p.expectPeekType(tokens.IDENTIFIER) {
+		return nil
 	}
-	p.nextToken() // identifier
 
 	st.Identifier = ast.Identifier{
 		Token: p.token,
 		Value: p.token.Literal,
 	}
 
-	if err := p.expectPeekType(tokens.ASSIGN); err != nil {
-		return nil, err
+	if !p.expectPeekType(tokens.ASSIGN) {
+		return nil
 	}
 
 	p.nextToken() // assign =
@@ -180,10 +200,10 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 		p.nextToken()
 	}
 
-	return st, nil
+	return st
 }
 
-func (p *Parser) parseReturnStatement() (ast.Statement, error) {
+func (p *Parser) parseReturnStatement() ast.Statement {
 	st := &ast.ReturnStatement{
 		Token: p.token,
 	}
@@ -192,5 +212,5 @@ func (p *Parser) parseReturnStatement() (ast.Statement, error) {
 		p.nextToken()
 	}
 
-	return st, nil
+	return st
 }
