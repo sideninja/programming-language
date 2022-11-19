@@ -104,6 +104,6 @@ func Test_Identifier(t *testing.T) {
 	ident, ok := stm.Expression.(*ast.Identifier)
 	assert.True(t, ok)
 
-	assert.Equal(t, input, ident.Value)
-	assert.Equal(t, tokens.IDENTIFIER, ident.Token.Type)
+	assert.Equal(t, "foo", ident.Value)
+	assert.Equal(t, tokens.IDENTIFIER, string(ident.Token.Type))
 }

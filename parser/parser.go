@@ -134,7 +134,7 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, error) {
 		Token: p.token,
 	}
 
-	st.Expression = p.parseExpression()
+	st.Expression = p.parseExpression(LOWEST)
 
 	if p.isPeekType(tokens.SEMICOLON) {
 		p.nextToken()
@@ -144,7 +144,7 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, error) {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	parser, registered := p.prefixParsers[p.token]
+	parser, registered := p.prefixParsers[p.token.Type]
 	if !registered {
 		return nil
 	}
@@ -174,7 +174,7 @@ func (p *Parser) parseLetStatement() (ast.Statement, error) {
 
 	p.nextToken() // assign =
 
-	st.Value = p.parseExpression()
+	st.Value = p.parseExpression(LOWEST)
 
 	for p.token.Type != tokens.SEMICOLON {
 		p.nextToken()
