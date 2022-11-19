@@ -16,7 +16,7 @@ func parseStatementsWithLen(t *testing.T, input string, statementsLen int) (*Par
 	program, err := p.Parse()
 	require.NoError(t, err)
 	require.NotNil(t, program)
-	assert.Len(t, program.Statements, statementsLen)
+	require.Len(t, program.Statements, statementsLen)
 
 	return p, program.Statements
 }
@@ -91,4 +91,19 @@ func Test_ProgramStringer(t *testing.T) {
 	}
 
 	assert.Equal(t, "let x = 100;", program.String())
+}
+
+func Test_Identifier(t *testing.T) {
+	input := `foo;`
+	p, statements := parseStatementsWithLen(t, input, 1)
+	require.Len(t, p.errors, 0)
+
+	stm, ok := statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+
+	ident, ok := stm.Expression.(*ast.Identifier)
+	assert.True(t, ok)
+
+	assert.Equal(t, input, ident.Value)
+	assert.Equal(t, tokens.IDENTIFIER, ident.Token.Type)
 }
