@@ -17,7 +17,7 @@ const (
 	GREATER    = ">"
 	LPAREN     = "("
 	RPAREN     = ")"
-	NEGATIVE   = "!"
+	BANG       = "!"
 	LBRACE     = "{"
 	RBRACE     = "}"
 	COMMA      = ","

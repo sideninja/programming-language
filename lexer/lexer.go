@@ -56,7 +56,7 @@ func (l *Lexer) NextToken() tokens.Token {
 			l.readChar()
 			token = tokens.New("!=", tokens.NOTEQUAL)
 		} else {
-			token = tokens.New("!", tokens.NEGATIVE)
+			token = tokens.New("!", tokens.BANG)
 		}
 	case '=':
 		if l.peakNext() == '=' {

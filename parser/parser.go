@@ -58,7 +58,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	parser.registerPrefix(tokens.IDENTIFIER, parser.parseIdentifier)
 	parser.registerPrefix(tokens.INT, parser.parseIntegerLiteral)
-	parser.registerPrefix(tokens.NEGATIVE, parser.parsePrefixExpression)
+	parser.registerPrefix(tokens.BANG, parser.parsePrefixExpression)
 	parser.registerPrefix(tokens.MINUS, parser.parsePrefixExpression)
 
 	parser.registerInfix(tokens.PLUS, parser.parseInfixExpression)
@@ -164,21 +164,20 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	parser, registered := p.prefixParsers[p.token.Type]
-	if !registered {
+	parser, exists := p.prefixParsers[p.token.Type]
+	if !exists {
 		p.addParseError(fmt.Errorf("no prefix parser found for token %s", p.token))
 		return nil
 	}
 	leftExpr := parser()
 
-	for precedence < p.peekPrecedence() && p.peekToken.Type != tokens.SEMICOLON {
-		p.nextToken()
-
-		infixParser, registered := p.infixParsers[p.token.Type]
-		if !registered {
-			p.addParseError(fmt.Errorf("no infix parser found for token %s", p.token))
-			return nil
+	for precedence < p.peekPrecedence() && !p.isPeekType(tokens.SEMICOLON) {
+		infixParser, exists := p.infixParsers[p.token.Type]
+		if !exists {
+			return leftExpr
 		}
+
+		p.nextToken()
 
 		leftExpr = infixParser(leftExpr)
 	}
