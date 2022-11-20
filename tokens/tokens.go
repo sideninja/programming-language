@@ -13,6 +13,8 @@ const (
 	DIVIDE     = "/"
 	EQUAL      = "=="
 	NOTEQUAL   = "!="
+	LESS       = "<"
+	GREATER    = ">"
 	LPAREN     = "("
 	RPAREN     = ")"
 	NEGATIVE   = "!"

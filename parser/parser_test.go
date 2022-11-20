@@ -14,11 +14,22 @@ func parseStatementsWithLen(t *testing.T, input string, statementsLen int) (*Par
 	l := lexer.New(input)
 	p := New(l)
 	program, err := p.Parse()
-	require.NoError(t, err)
-	require.NotNil(t, program)
-	require.Len(t, program.Statements, statementsLen)
+	require.NoError(t, err, fmt.Sprintf("parsing statement %s failed", input))
+	require.NotNil(t, program, fmt.Sprintf("parsing statement %s produced nil output", input))
+	require.Len(
+		t,
+		program.Statements,
+		statementsLen,
+		fmt.Sprintf("parsing input (%s) didn't produce required length of statements", input),
+	)
 
 	return p, program.Statements
+}
+
+func assertIntegerLiteral(t *testing.T, expression ast.Expression, value int64) {
+	lit, ok := expression.(*ast.IntegerLiteral)
+	require.True(t, ok)
+	assert.Equal(t, value, lit.Value)
 }
 
 func Test_LetStatement(t *testing.T) {
@@ -148,5 +159,82 @@ func Test_PrefixExpressions(t *testing.T) {
 		assert.Equal(t, testOut[i].operator, prefix.Operator)
 		assert.Equal(t, testOut[i].literal, prefix.Right.TokenLiteral())
 		assert.Equal(t, testOut[i].out, prefix.String())
+	}
+}
+
+func Test_InfixExpressionSimple(t *testing.T) {
+	tests := []struct {
+		in       string
+		left     int64
+		operator string
+		right    int64
+	}{
+		{in: "5 + 4", left: 5, operator: "+", right: 4},
+		{in: "3 - 4", left: 3, operator: "-", right: 4},
+		{in: "2 * 3", left: 2, operator: "*", right: 3},
+		//{in: "10 / 2", left: 10, operator: "/", right: 2},
+		{in: "2 == 3", left: 2, operator: "==", right: 3},
+		{in: "3 < 2", left: 3, operator: "<", right: 2},
+		{in: "10 > 2", left: 10, operator: ">", right: 2},
+		{in: "2 != 2", left: 2, operator: "!=", right: 2},
+	}
+
+	for _, test := range tests {
+		p, statements := parseStatementsWithLen(t, test.in, 1)
+		require.Len(t, p.errors, 0)
+
+		st, ok := statements[0].(*ast.ExpressionStatement)
+		require.True(t, ok)
+
+		exp, ok := st.Expression.(*ast.InfixExpression)
+		require.True(t, ok)
+
+		assert.Equal(t, test.operator, exp.Operator)
+		assertIntegerLiteral(t, exp.Left, test.left)
+		assertIntegerLiteral(t, exp.Right, test.right)
+	}
+}
+
+func Test_InfixSum(t *testing.T) {
+	p, statements := parseStatementsWithLen(t, "1 + 2 + 3", 1)
+	require.Len(t, p.errors, 0)
+
+	st, ok := statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	assert.Equal(t, "((1 + 2) + 3)", st.String())
+
+	exp1, ok := st.Expression.(*ast.InfixExpression)
+	require.True(t, ok)
+
+	assert.Equal(t, "+", exp1.Operator)
+	assertIntegerLiteral(t, exp1.Right, 3)
+
+	exp2, ok := exp1.Left.(*ast.InfixExpression)
+	require.True(t, ok)
+
+	assert.Equal(t, "+", exp2.Operator)
+	assertIntegerLiteral(t, exp2.Right, 2)
+	assertIntegerLiteral(t, exp2.Left, 1)
+}
+
+func Test_InfixExpressionMultiple(t *testing.T) {
+	tests := []struct {
+		in  string
+		out string
+	}{
+		{in: "1 + 2 + 3", out: "((1 + 2) + 3)"},
+		{in: "1 - 2 + 3", out: "((1 - 2) + 3)"},
+		{in: "1 + 2 * 3", out: "(1 + (2 * 3))"},
+		{in: "1 + 2 * 3", out: "(1 + (2 * 3))"},
+		{in: "1 < 2 * 3", out: "(1 < (2 * 3))"},
+		{in: "1 / 2 * 3", out: "((1 / 2) * 3)"},
+	}
+
+	for _, test := range tests {
+		p, statements := parseStatementsWithLen(t, test.in, 1)
+		require.Len(t, p.errors, 0)
+
+		assert.Equal(t, test.out, statements[0].String())
 	}
 }
