@@ -172,7 +172,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	leftExpr := parser()
 
 	for precedence < p.peekPrecedence() && !p.isPeekType(tokens.SEMICOLON) {
-		infixParser, exists := p.infixParsers[p.token.Type]
+		infixParser, exists := p.infixParsers[p.peekToken.Type]
 		if !exists {
 			return leftExpr
 		}

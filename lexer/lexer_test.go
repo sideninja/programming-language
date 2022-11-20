@@ -28,14 +28,14 @@ func TestNextToken(t *testing.T) {
 			{Literal: "2", Type: tokens.INT},
 		},
 	}, {
-		in: "1 + 2 * 3 \\ (let foo = 0)",
+		in: "1 + 2 * 3 / (let foo = 0)",
 		out: []tokens.Token{
 			{Literal: "1", Type: tokens.INT},
 			{Literal: "+", Type: tokens.PLUS},
 			{Literal: "2", Type: tokens.INT},
 			{Literal: "*", Type: tokens.MULTIPLY},
 			{Literal: "3", Type: tokens.INT},
-			{Literal: "\\", Type: tokens.DIVIDE},
+			{Literal: "/", Type: tokens.DIVIDE},
 			{Literal: "(", Type: tokens.LPAREN},
 			{Literal: "let", Type: tokens.LET},
 			{Literal: "foo", Type: tokens.IDENTIFIER},

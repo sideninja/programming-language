@@ -20,7 +20,7 @@ func parseStatementsWithLen(t *testing.T, input string, statementsLen int) (*Par
 		t,
 		program.Statements,
 		statementsLen,
-		fmt.Sprintf("parsing input (%s) didn't produce required length of statements", input),
+		fmt.Sprintf("parsing input (%s) didn't produce required length of statements: %v", input, program.Statements),
 	)
 
 	return p, program.Statements
@@ -172,7 +172,7 @@ func Test_InfixExpressionSimple(t *testing.T) {
 		{in: "5 + 4", left: 5, operator: "+", right: 4},
 		{in: "3 - 4", left: 3, operator: "-", right: 4},
 		{in: "2 * 3", left: 2, operator: "*", right: 3},
-		//{in: "10 / 2", left: 10, operator: "/", right: 2},
+		{in: "10 / 2", left: 10, operator: "/", right: 2},
 		{in: "2 == 3", left: 2, operator: "==", right: 3},
 		{in: "3 < 2", left: 3, operator: "<", right: 2},
 		{in: "10 > 2", left: 10, operator: ">", right: 2},

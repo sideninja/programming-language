@@ -39,8 +39,12 @@ func (l *Lexer) NextToken() tokens.Token {
 		token = tokens.New(l.symbol.String(), tokens.MINUS)
 	case '*':
 		token = tokens.New(l.symbol.String(), tokens.MULTIPLY)
-	case '\\':
+	case '/':
 		token = tokens.New(l.symbol.String(), tokens.DIVIDE)
+	case '<':
+		token = tokens.New(l.symbol.String(), tokens.LESS)
+	case '>':
+		token = tokens.New(l.symbol.String(), tokens.GREATER)
 	case '(':
 		token = tokens.New(l.symbol.String(), tokens.LPAREN)
 	case ')':
