@@ -58,8 +58,11 @@ func New(l *lexer.Lexer) *Parser {
 
 	parser.registerPrefix(tokens.IDENTIFIER, parser.parseIdentifier)
 	parser.registerPrefix(tokens.INT, parser.parseIntegerLiteral)
+	parser.registerPrefix(tokens.TRUE, parser.parseBooleanLiteral)
+	parser.registerPrefix(tokens.FALSE, parser.parseBooleanLiteral)
 	parser.registerPrefix(tokens.BANG, parser.parsePrefixExpression)
 	parser.registerPrefix(tokens.MINUS, parser.parsePrefixExpression)
+	parser.registerPrefix(tokens.LPAREN, parser.parseGroupExpression)
 
 	parser.registerInfix(tokens.PLUS, parser.parseInfixExpression)
 	parser.registerInfix(tokens.MINUS, parser.parseInfixExpression)
@@ -197,6 +200,17 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	return prefix
 }
 
+func (p *Parser) parseGroupExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+
+	if !p.expectPeekType(tokens.RPAREN) {
+		return nil
+	}
+
+	return exp
+}
+
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	infix := &ast.InfixExpression{
 		Token:    p.token,
@@ -231,6 +245,13 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	integer.Value = val
 	return integer
+}
+
+func (p *Parser) parseBooleanLiteral() ast.Expression {
+	return &ast.BooleanLiteral{
+		Token: p.token,
+		Value: p.token.Literal == "true",
+	}
 }
 
 /*

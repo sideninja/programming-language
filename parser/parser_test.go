@@ -238,3 +238,22 @@ func Test_InfixExpressionMultiple(t *testing.T) {
 		assert.Equal(t, test.out, statements[0].String())
 	}
 }
+
+func Test_GroupExpression(t *testing.T) {
+	tests := []struct {
+		in  string
+		out string
+	}{
+		{in: "1 + (2 + 3)", out: "(1 + (2 + 3))"},
+		{in: "(1 + 2) * 3", out: "((1 + 2) * 3)"},
+		{in: "1 + (2 + 3) + 4", out: "((1 + (2 + 3)) + 4)"},
+		{in: "-(5 + 4)", out: "(-(5 + 4))"},
+		{in: "!(true == false)", out: "(!(true == false))"},
+	}
+
+	for _, test := range tests {
+		p, statements := parseStatementsWithLen(t, test.in, 1)
+		require.Len(t, p.errors, 0)
+		assert.Equal(t, test.out, statements[0].String())
+	}
+}
